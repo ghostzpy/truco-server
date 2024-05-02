@@ -1,16 +1,45 @@
-// User.js
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('./database'); // Certifique-se que o caminho está correto
 
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  username: { type: String, required: true, unique: true },
-  balance: { type: mongoose.Types.Decimal128, default: 0 },
-  points: { type: Number, default: 100 },
-  isAdmin: { type: Boolean, default: false }
+const User = sequelize.define('User', {
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+    password: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    username: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+    points: {
+        type: DataTypes.INTEGER,
+        defaultValue: 100
+    },
+    balance: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    isAdmin: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    verificationToken: {
+        type: DataTypes.STRING,
+        allowNull: true // Definido como true para permitir que este campo seja nulo após a verificação
+    },
+    isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false // O padrão é false, significa que o usuário precisa verificar o e-mail para ativar a conta
+    }
 });
-
-const User = mongoose.model('User', userSchema);
 
 module.exports = User;
