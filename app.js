@@ -89,7 +89,7 @@ function checkToken(req, res, next) {
   if (!token) return res.status(401).json({ msg: "Acesso negado!" });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, 'S7NL4@V&H$QAf24kNZpmAN&uHw8rnHkno4tcE!1837u8n^$@AfVbbPODSAKDAJLD$!daVZpoOiA');
     req.user = decoded;
     next();
   } catch (err) {
@@ -243,7 +243,7 @@ app.post("/auth/login", async (req, res) => {
       return res.status(422).json({ msg: "Senha inválida" });
     }
 
-    const secret = process.env.JWT_SECRET;
+    const secret = 'S7NL4@V&H$QAf24kNZpmAN&uHw8rnHkno4tcE!1837u8n^$@AfVbbPODSAKDAJLD$!daVZpoOiA';
     const token = jwt.sign({ id: user.id }, secret, { expiresIn: '1h' });
     res.status(200).json({ msg: "Autenticação realizada com sucesso!", token });
   } catch (error) {
