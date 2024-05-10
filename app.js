@@ -14,6 +14,7 @@ const socketIo = require('socket.io');
 
 // Modelos
 const User = require("./User.js");
+const Notification = require('./notifications.js'); // Ajuste o caminho conforme necessário
 const ResetToken = require('./ResetToken.js'); // Ajuste o caminho conforme necessário
 const sequelize = require('./database'); // Certifique-se que o caminho está correto
 
@@ -89,7 +90,7 @@ function checkToken(req, res, next) {
   if (!token) return res.status(401).json({ msg: "Acesso negado!" });
 
   try {
-    const decoded = jwt.verify(token, 'S7NL4@V&H$QAf24kNZpmAN&uHw8rnHkno4tcE!1837u8n^$@AfVbbPODSAKDAJLD$!daVZpoOiA');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (err) {
@@ -227,6 +228,95 @@ async function sendVerificationEmail(to, token) {
 }
 
 // ******************************************************************************************
+// *********************************  ROTAS DE NOTIFICAÇÕES  ********************************
+// ******************************************************************************************
+app.post("/notifications/create", async (req, res) => {
+  const { title, description, type } = req.body;
+  let { user } = req.body;
+
+  // Verifica se os campos necessários estão presentes
+  if (!title || !description || !type) {
+    return res.status(400).json({ msg: "Todos os campos são obrigatórios: title, description, type." });
+  }
+
+  // Se o campo user for 'global', ajusta para a palavra reservada 'global'
+  if (user === 'global') {
+    user = 'global';
+  } else {
+    // Verifica se o usuário existe antes de criar a notificação
+    const userExists = await User.findByPk(user);
+    if (!userExists) {
+      return res.status(404).json({ msg: "Usuário não encontrado!" });
+    }
+  }
+
+  // Define a data de expiração para 2 dias após a criação
+  const dateCreated = new Date();
+  const expiredDate = new Date(dateCreated);
+  expiredDate.setDate(expiredDate.getDate() + 2); // Adiciona 2 dias à data de criação
+
+  // Cria a notificação
+  try {
+    const notification = await Notification.create({
+      title,
+      description,
+      dateCreated: dateCreated,
+      expiredDate: expiredDate,
+      user,
+      type
+    });
+    res.status(201).json({ msg: "Notificação criada com sucesso!", notification });
+  } catch (error) {
+    console.error('Erro ao criar notificação:', error);
+    res.status(500).json({ msg: "Erro interno do servidor" });
+  }
+});
+
+app.delete("/notifications/delete/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+      // Verifica se a notificação existe antes de tentar deletá-la
+      const notification = await Notification.findByPk(id);
+      if (!notification) {
+          return res.status(404).json({ msg: "Notificação não encontrada!" });
+      }
+
+      // Deleta a notificação
+      await Notification.destroy({
+          where: { id }
+      });
+
+      res.status(200).json({ msg: "Notificação deletada com sucesso!" });
+  } catch (error) {
+      console.error('Erro ao deletar notificação:', error);
+      res.status(500).json({ msg: "Erro interno do servidor" });
+  }
+});
+
+app.get("/notifications/update/:id", async (req, res) => {
+  const { id } = req.params;  // Extrai o ID do usuário dos parâmetros da rota
+
+  try {
+      // Busca todas as notificações associadas a esse ID de usuário
+      const notifications = await Notification.findAll({
+          where: { user: id }
+      });
+
+      // Verifica se foram encontradas notificações
+      if (!notifications || notifications.length === 0) {
+          return res.status(404).json({ msg: "Nenhuma notificação encontrada para este usuário." });
+      }
+
+      // Retorna as notificações encontradas em formato JSON
+      res.status(200).json(notifications);
+  } catch (error) {
+      console.error('Erro ao buscar notificações:', error);
+      res.status(500).json({ msg: "Erro interno do servidor" });
+  }
+});
+
+// ******************************************************************************************
 // *********************************  ROTA DE LOGIN  ****************************************
 // ******************************************************************************************
 app.post("/auth/login", async (req, res) => {
@@ -243,7 +333,7 @@ app.post("/auth/login", async (req, res) => {
       return res.status(422).json({ msg: "Senha inválida" });
     }
 
-    const secret = 'S7NL4@V&H$QAf24kNZpmAN&uHw8rnHkno4tcE!1837u8n^$@AfVbbPODSAKDAJLD$!daVZpoOiA';
+    const secret = process.env.JWT_SECRET;
     const token = jwt.sign({ id: user.id }, secret, { expiresIn: '1h' });
     res.status(200).json({ msg: "Autenticação realizada com sucesso!", token });
   } catch (error) {
