@@ -55,8 +55,9 @@ app.get("/", (req, res) => {
 });
 
 // Inicialização do servidor depois de verificar a conexão com o banco de dados
-server.listen(3000, () => {
-    console.log(`Servidor rodando na porta 3000`);
+const port = 3002
+server.listen(port, () => {
+    console.log(`Servidor rodando na porta ${port}`);
 });
 
 // ******************************************************************************************
@@ -90,7 +91,7 @@ function checkToken(req, res, next) {
   if (!token) return res.status(401).json({ msg: "Acesso negado!" });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, 'S7NL4@V&H$QAf24kNZpmAN&uHw8rnHkno4tcE!1837u8n^$@AfVbbPODSAKDAJLD$!daVZpoOiA');
     req.user = decoded;
     next();
   } catch (err) {
@@ -333,7 +334,7 @@ app.post("/auth/login", async (req, res) => {
       return res.status(422).json({ msg: "Senha inválida" });
     }
 
-    const secret = process.env.JWT_SECRET;
+    const secret = 'S7NL4@V&H$QAf24kNZpmAN&uHw8rnHkno4tcE!1837u8n^$@AfVbbPODSAKDAJLD$!daVZpoOiA';
     const token = jwt.sign({ id: user.id }, secret, { expiresIn: '1h' });
     res.status(200).json({ msg: "Autenticação realizada com sucesso!", token });
   } catch (error) {
@@ -523,7 +524,7 @@ app.get("/user/username/:email", async (req, res) => {
   try {
     const user = await User.findOne({
       where: { email },
-      attributes: ['username']
+      attributes: ['username','id']
     });
 
     if (!user) {
@@ -531,7 +532,8 @@ app.get("/user/username/:email", async (req, res) => {
     }
 
     res.status(200).json({
-      username: user.username
+      username: user.username,
+      id: user.id
     });
   } catch (error) {
     console.error('Erro ao buscar detalhes do usuário:', error);
@@ -677,7 +679,7 @@ io.on('connection', (socket) => {
 
   // Recebendo uma mensagem do cliente
   socket.on('send message', (msg) => {
-      console.log('Mensagem recebida:', msg);
+      // console.log('Mensagem recebida:', msg);
 
       // Aqui você pode processar a mensagem, salvar no banco de dados, etc.
 
@@ -687,6 +689,6 @@ io.on('connection', (socket) => {
 
   // Evento disparado quando o usuário se desconecta
   socket.on('disconnect', () => {
-      console.log('Um usuário se desconectou');
+      // console.log('Um usuário se desconectou');
   });
 });
